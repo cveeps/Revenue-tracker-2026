@@ -110,6 +110,8 @@ body { font-family:'DM Sans',sans-serif; background:var(--bg); color:var(--ink);
 .legend-dot.projected { background:rgba(196,154,16,0.75); }
 .remaining-row { display:flex; justify-content:space-between; margin-top:14px; }
 .remaining-item { text-align:center; }
+.remaining-item.clickable { cursor:pointer; transition:opacity 0.15s; -webkit-tap-highlight-color:transparent; }
+.remaining-item.clickable:hover { opacity:0.75; }
 .remaining-item .val { font-size:18px; font-weight:600; color:white; }
 .remaining-item .lbl { font-size:11px; color:rgba(255,255,255,0.4); margin-top:2px; }
 .divider-line { width:1px; background:rgba(255,255,255,0.1); align-self:stretch; margin:4px 0; }
@@ -372,9 +374,9 @@ body { font-family:'DM Sans',sans-serif; background:var(--bg); color:var(--ink);
   <div class="remaining-row">
     <div class="remaining-item"><div class="val" id="heroRemaining">—</div><div class="lbl">Remaining</div></div>
     <div class="divider-line"></div>
-    <div class="remaining-item"><div class="val" id="heroPipelineVal">—</div><div class="lbl">In Pipeline</div></div>
+    <div class="remaining-item clickable" onclick="heroFilter('pending')" title="View pending jobs"><div class="val" id="heroPipelineVal">—</div><div class="lbl">In Pipeline</div></div>
     <div class="divider-line"></div>
-    <div class="remaining-item"><div class="val" id="heroJobs">0</div><div class="lbl">Completed</div></div>
+    <div class="remaining-item clickable" onclick="heroFilter('confirmed')" title="View completed jobs"><div class="val" id="heroJobs">0</div><div class="lbl">Completed</div></div>
   </div>
 </div>
 
@@ -847,6 +849,17 @@ function renderJobList(s, isCurrent, curM){
 }
 
 // ── FILTER ────────────────────────────────────────────────────────────────
+window.heroFilter = function(f){
+  activeFilter=f;
+  document.querySelectorAll('.filter-pill').forEach(p=>p.className='filter-pill');
+  const pills=document.querySelectorAll('.filter-pill');
+  // match pill: all=0, confirmed=1, pending=2
+  const idx = f==='confirmed'?1:f==='pending'?2:0;
+  pills[idx].className='filter-pill active-'+f;
+  renderJobList(getState(), isCurrentYear(), REAL_TODAY.getMonth());
+  document.querySelector('.section-row .section-title').closest('.section-row')
+    .scrollIntoView({behavior:'smooth', block:'start'});
+};
 window.setFilter = function(f,btn){
   activeFilter=f;
   document.querySelectorAll('.filter-pill').forEach(p=>p.className='filter-pill');
