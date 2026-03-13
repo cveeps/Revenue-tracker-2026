@@ -2,8 +2,14 @@
 <html lang="en">
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>2026 Revenue</title>
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="default">
+<meta name="apple-mobile-web-app-title" content="Revenue">
+<meta name="theme-color" content="#F7F5F2">
+<link rel="apple-touch-icon" href="icon.png">
+<link rel="manifest" href="manifest.json">
+<title>Revenue Tracker</title>
 <link href="https://fonts.googleapis.com/css2?family=DM+Serif+Display:ital@0;1&family=DM+Sans:opsz,wght@9..40,300;9..40,400;9..40,500;9..40,600&display=swap" rel="stylesheet">
 <style>
 * { box-sizing: border-box; margin: 0; padding: 0; }
@@ -16,9 +22,13 @@
   --red: #C45C4A; --red-light: #FAEDEB;
   --radius: 16px; --shadow: 0 2px 20px rgba(26,24,20,0.06);
 }
-body { font-family:'DM Sans',sans-serif; background:var(--bg); color:var(--ink); min-height:100vh; padding:24px 16px 110px; max-width:480px; margin:0 auto; }
+button,input,textarea,select { -webkit-tap-highlight-color:transparent; touch-action:manipulation; font-family:'DM Sans',sans-serif; }
+input,textarea { font-size:16px !important; }
+body { font-family:'DM Sans',sans-serif; background:var(--bg); color:var(--ink); min-height:100vh;
+  padding: max(24px, env(safe-area-inset-top)) 16px calc(110px + env(safe-area-inset-bottom));
+  max-width:480px; margin:0 auto; }
 
-/* SYNC STATUS */
+/* SYNC BAR */
 .sync-bar { display:flex; align-items:center; gap:6px; font-size:11px; color:var(--ink-muted); margin-bottom:12px; padding:6px 10px; background:var(--surface); border-radius:8px; box-shadow:var(--shadow); }
 .sync-dot { width:7px; height:7px; border-radius:50%; background:var(--ink-faint); flex-shrink:0; transition:background 0.3s; }
 .sync-dot.connected { background:var(--green); }
@@ -26,19 +36,47 @@ body { font-family:'DM Sans',sans-serif; background:var(--bg); color:var(--ink);
 .sync-dot.error { background:var(--red); }
 
 /* HEADER */
-.header { padding:4px 0 24px; display:flex; justify-content:space-between; align-items:flex-start; }
+.header { padding:4px 0 20px; display:flex; justify-content:space-between; align-items:flex-start; cursor:pointer; user-select:none; }
 .header-left h1 { font-family:'DM Serif Display',serif; font-size:28px; line-height:1.1; letter-spacing:-0.5px; }
 .header-left p { font-size:13px; color:var(--ink-muted); margin-top:4px; }
+.header-right { display:flex; flex-direction:column; align-items:flex-end; gap:6px; }
 .date-badge { background:var(--surface); border:1px solid var(--ink-faint); border-radius:20px; padding:6px 14px; font-size:12px; font-weight:500; color:var(--ink-muted); white-space:nowrap; }
+.settings-hint { font-size:10px; color:var(--ink-muted); opacity:0.6; }
+
+/* YEAR SWITCHER */
+.year-switcher { display:flex; align-items:center; gap:8px; margin-bottom:16px; }
+.year-btn { background:none; border:1.5px solid var(--ink-faint); border-radius:8px; width:30px; height:30px; font-size:14px; cursor:pointer; display:flex; align-items:center; justify-content:center; color:var(--ink-muted); transition:all 0.15s; }
+.year-btn:hover { border-color:var(--accent); color:var(--accent); }
+.year-btn:disabled { opacity:0.3; cursor:default; }
+.year-label { font-family:'DM Serif Display',serif; font-size:18px; flex:1; text-align:center; }
+.year-badge { font-size:10px; font-weight:600; letter-spacing:0.08em; text-transform:uppercase; padding:3px 8px; border-radius:10px; background:var(--green-light); color:var(--green-dark); }
+.year-badge.past { background:var(--ink-faint); color:var(--ink-muted); }
+
+/* SETTINGS PANEL */
+.settings-panel { background:var(--surface); border-radius:var(--radius); padding:20px; margin-bottom:16px; box-shadow:var(--shadow); border:1.5px solid var(--ink-faint); animation:fadeIn 0.2s ease; }
+.settings-panel.hidden { display:none; }
+.settings-title { font-size:11px; font-weight:600; letter-spacing:0.1em; text-transform:uppercase; color:var(--ink-muted); margin-bottom:16px; }
+.settings-row { display:flex; align-items:center; gap:12px; margin-bottom:14px; }
+.settings-row label { font-size:14px; font-weight:500; flex:1; }
+.settings-row .currency-wrap { width:140px; flex-shrink:0; }
+.settings-row input { width:100%; background:var(--bg); border:1.5px solid var(--ink-faint); border-radius:10px; padding:10px 10px 10px 24px; font-size:15px; color:var(--ink); outline:none; transition:border-color 0.15s; }
+.settings-row input:focus { border-color:var(--accent); }
+.settings-save-btn { width:100%; background:var(--ink); color:white; border:none; border-radius:12px; padding:13px; font-size:14px; font-weight:600; cursor:pointer; transition:opacity 0.15s; margin-top:4px; }
+.settings-save-btn:hover { opacity:0.85; }
+.settings-divider { height:1px; background:var(--ink-faint); margin:14px 0; }
+.settings-danger { font-size:12px; color:var(--red); cursor:pointer; background:none; border:none; padding:4px 0; opacity:0.7; }
+.settings-danger:hover { opacity:1; }
 
 /* TRACK BANNER */
 .track-banner { border-radius:var(--radius); padding:16px 20px 14px; margin-bottom:16px; box-shadow:var(--shadow); }
 .track-banner.behind { background:var(--red-light); border:1.5px solid #E8B4AD; }
 .track-banner.ahead  { background:var(--green-light); border:1.5px solid #A8CFBC; }
+.track-banner.readonly { background:var(--bg); border:1.5px solid var(--ink-faint); }
 .track-top-row { display:flex; align-items:center; gap:12px; margin-bottom:12px; }
 .track-pill { font-size:10px; font-weight:700; letter-spacing:0.1em; text-transform:uppercase; padding:4px 10px; border-radius:20px; white-space:nowrap; flex-shrink:0; }
 .track-banner.behind .track-pill { background:var(--red); color:white; }
 .track-banner.ahead  .track-pill { background:var(--green); color:white; }
+.track-banner.readonly .track-pill { background:var(--ink-muted); color:white; }
 .track-details { flex:1; }
 .track-main { font-size:15px; font-weight:600; color:var(--ink); }
 .track-sub { font-size:11px; color:var(--ink-muted); margin-top:2px; }
@@ -87,7 +125,7 @@ body { font-family:'DM Sans',sans-serif; background:var(--bg); color:var(--ink);
 .section-title { font-size:11px; font-weight:600; letter-spacing:0.1em; text-transform:uppercase; color:var(--ink-muted); }
 .section-hint { font-weight:400; opacity:0.55; text-transform:none; letter-spacing:0; font-size:10px; }
 .filter-pills { display:flex; gap:6px; }
-.filter-pill { font-size:10px; font-weight:600; padding:4px 10px; border-radius:20px; border:1.5px solid var(--ink-faint); background:var(--bg); color:var(--ink-muted); cursor:pointer; transition:all 0.15s; }
+.filter-pill { font-size:10px; font-weight:600; padding:4px 10px; border-radius:20px; border:1.5px solid var(--ink-faint); background:var(--bg); color:var(--ink-muted); cursor:pointer; transition:all 0.15s; min-height:28px; display:inline-flex; align-items:center; }
 .filter-pill.active-all       { border-color:var(--ink); background:var(--ink); color:white; }
 .filter-pill.active-confirmed { border-color:var(--green); background:var(--green-light); color:var(--green-dark); }
 .filter-pill.active-pending   { border-color:var(--yellow); background:var(--yellow-light); color:var(--yellow-dark); }
@@ -134,43 +172,42 @@ body { font-family:'DM Sans',sans-serif; background:var(--bg); color:var(--ink);
 .job-pay.confirmed-pay { background:var(--green-light); color:var(--green-dark); }
 .job-pay.pending-pay   { background:var(--yellow-light); color:var(--yellow-dark); }
 .job-actions { display:flex; gap:10px; margin-top:6px; align-items:center; flex-wrap:wrap; }
-.job-btn { font-size:11px; color:var(--ink-muted); background:none; border:none; cursor:pointer; padding:2px 0; font-family:'DM Sans',sans-serif; opacity:0.65; white-space:nowrap; }
+.job-btn { font-size:11px; color:var(--ink-muted); background:none; border:none; cursor:pointer; padding:2px 0; opacity:0.65; min-height:32px; display:inline-flex; align-items:center; }
 .job-btn:hover { opacity:1; }
 .job-btn.edit:hover { color:var(--accent); }
 .job-btn.del:hover  { color:var(--red); }
 .job-btn.revert:hover { color:var(--yellow-dark); }
-.mark-complete-btn { font-size:11px; font-weight:600; color:var(--green-dark); background:var(--green-light); border:1.5px solid var(--green); border-radius:8px; padding:4px 10px; cursor:pointer; font-family:'DM Sans',sans-serif; transition:all 0.15s; white-space:nowrap; }
+.mark-complete-btn { font-size:11px; font-weight:600; color:var(--green-dark); background:var(--green-light); border:1.5px solid var(--green); border-radius:8px; padding:5px 12px; cursor:pointer; transition:all 0.15s; min-height:32px; }
 .mark-complete-btn:hover { background:var(--green); color:white; }
+
+/* READONLY OVERLAY */
+.readonly-notice { background:var(--ink-faint); border-radius:10px; padding:10px 14px; font-size:13px; color:var(--ink-muted); text-align:center; margin-bottom:12px; }
 
 /* MODALS */
 .modal-overlay { display:none; position:fixed; inset:0; background:rgba(26,24,20,0.5); z-index:100; align-items:flex-end; justify-content:center; backdrop-filter:blur(4px); }
 .modal-overlay.open { display:flex; }
-.modal { background:var(--surface); border-radius:24px 24px 0 0; padding:28px 24px 44px; width:100%; max-width:480px; max-height:88vh; overflow-y:auto; animation:slideUp 0.3s cubic-bezier(0.16,1,0.3,1); }
+.modal { background:var(--surface); border-radius:24px 24px 0 0; padding:28px 24px calc(44px + env(safe-area-inset-bottom)); width:100%; max-width:480px; max-height:88vh; overflow-y:auto; animation:slideUp 0.3s cubic-bezier(0.16,1,0.3,1); }
 @keyframes slideUp { from{transform:translateY(100%);opacity:0} to{transform:translateY(0);opacity:1} }
 .modal-handle { width:36px; height:4px; background:var(--ink-faint); border-radius:2px; margin:0 auto 20px; }
 .modal h3 { font-family:'DM Serif Display',serif; font-size:22px; margin-bottom:18px; }
 .field-group { margin-bottom:14px; }
 .field-group label { display:block; font-size:11px; font-weight:600; letter-spacing:0.08em; text-transform:uppercase; color:var(--ink-muted); margin-bottom:6px; }
-.field-group input,.field-group textarea { width:100%; background:var(--bg); border:1.5px solid var(--ink-faint); border-radius:10px; padding:12px 14px; font-family:'DM Sans',sans-serif; font-size:15px; color:var(--ink); outline:none; transition:border-color 0.15s; resize:none; }
+.field-group input,.field-group textarea { width:100%; background:var(--bg); border:1.5px solid var(--ink-faint); border-radius:10px; padding:12px 14px; font-size:15px; color:var(--ink); outline:none; transition:border-color 0.15s; resize:none; }
 .field-group input:focus,.field-group textarea:focus { border-color:var(--accent); }
 .currency-wrap { position:relative; }
 .currency-wrap::before { content:'$'; position:absolute; left:14px; top:50%; transform:translateY(-50%); font-size:15px; color:var(--ink-muted); pointer-events:none; z-index:1; }
 .currency-wrap input { padding-left:26px; }
 .modal-actions { display:flex; gap:10px; margin-top:20px; }
-.btn-save { flex:1; background:var(--ink); color:white; border:none; border-radius:12px; padding:14px; font-family:'DM Sans',sans-serif; font-size:15px; font-weight:600; cursor:pointer; transition:opacity 0.15s; }
+.btn-save { flex:1; background:var(--ink); color:white; border:none; border-radius:12px; padding:14px; font-size:15px; font-weight:600; cursor:pointer; transition:opacity 0.15s; }
 .btn-save:hover { opacity:0.85; }
-.btn-cancel { background:var(--bg); color:var(--ink-muted); border:none; border-radius:12px; padding:14px 20px; font-family:'DM Sans',sans-serif; font-size:15px; cursor:pointer; }
-
-/* TYPE TOGGLE */
+.btn-cancel { background:var(--bg); color:var(--ink-muted); border:none; border-radius:12px; padding:14px 20px; font-size:15px; cursor:pointer; }
 .type-toggle { display:flex; gap:8px; margin-bottom:10px; }
-.type-btn { flex:1; padding:12px 6px; border-radius:10px; border:1.5px solid var(--ink-faint); background:var(--bg); font-family:'DM Sans',sans-serif; font-size:13px; font-weight:500; color:var(--ink-muted); cursor:pointer; transition:all 0.15s; text-align:center; }
+.type-btn { flex:1; padding:12px 6px; border-radius:10px; border:1.5px solid var(--ink-faint); background:var(--bg); font-size:13px; font-weight:500; color:var(--ink-muted); cursor:pointer; transition:all 0.15s; text-align:center; }
 .type-btn.active.confirmed { border-color:var(--green);  color:var(--green-dark); background:var(--green-light); }
 .type-btn.active.pending   { border-color:var(--yellow); color:var(--yellow-dark); background:var(--yellow-light); }
 .type-hint { font-size:12px; color:var(--ink-muted); margin-bottom:14px; line-height:1.5; padding:10px 12px; background:var(--bg); border-radius:8px; }
-
-/* PAY MODE TOGGLE (exact vs range) */
 .pay-mode-row { display:flex; gap:6px; margin-bottom:12px; }
-.pay-mode-btn { flex:1; padding:8px; border-radius:8px; border:1.5px solid var(--ink-faint); background:var(--bg); font-family:'DM Sans',sans-serif; font-size:12px; font-weight:500; color:var(--ink-muted); cursor:pointer; transition:all 0.15s; text-align:center; }
+.pay-mode-btn { flex:1; padding:8px; border-radius:8px; border:1.5px solid var(--ink-faint); background:var(--bg); font-size:12px; font-weight:500; color:var(--ink-muted); cursor:pointer; transition:all 0.15s; text-align:center; }
 .pay-mode-btn.active { border-color:var(--accent); background:var(--accent-light); color:#A07840; }
 
 /* MONTH DETAIL */
@@ -190,13 +227,11 @@ body { font-family:'DM Sans',sans-serif; background:var(--bg); color:var(--ink);
 .chip-pay { font-size:13px; font-weight:600; white-space:nowrap; flex-shrink:0; }
 .confirmed-chip .chip-pay { color:var(--green-dark); }
 .pending-chip   .chip-pay { color:var(--yellow-dark); }
-.chip-edit-btn { font-size:12px; color:var(--ink-muted); background:none; border:1px solid var(--ink-faint); border-radius:8px; padding:5px 11px; cursor:pointer; font-family:'DM Sans',sans-serif; white-space:nowrap; flex-shrink:0; }
+.chip-edit-btn { font-size:12px; color:var(--ink-muted); background:none; border:1px solid var(--ink-faint); border-radius:8px; padding:5px 11px; cursor:pointer; white-space:nowrap; flex-shrink:0; }
 .chip-edit-btn:hover { border-color:var(--accent); color:var(--accent); }
-.chip-complete-btn { font-size:11px; font-weight:600; color:var(--green-dark); background:var(--green-light); border:1.5px solid var(--green); border-radius:8px; padding:5px 10px; cursor:pointer; font-family:'DM Sans',sans-serif; white-space:nowrap; flex-shrink:0; }
+.chip-complete-btn { font-size:11px; font-weight:600; color:var(--green-dark); background:var(--green-light); border:1.5px solid var(--green); border-radius:8px; padding:5px 10px; cursor:pointer; white-space:nowrap; flex-shrink:0; }
 .chip-complete-btn:hover { background:var(--green); color:white; }
 .empty-state { text-align:center; padding:24px; color:var(--ink-muted); font-size:14px; }
-
-/* COMPLETE MODAL */
 .complete-modal-job { font-family:'DM Serif Display',serif; font-size:18px; margin-bottom:16px; color:var(--ink); }
 
 /* CALENDAR */
@@ -207,7 +242,7 @@ body { font-family:'DM Sans',sans-serif; background:var(--bg); color:var(--ink);
 .cal-toggle-sub { font-size:12px; color:var(--ink-muted); }
 .cal-chevron { font-size:18px; color:var(--ink-muted); transition:transform 0.25s; }
 .cal-chevron.open { transform:rotate(180deg); }
-.cal-body { display:none; background:var(--surface); border-radius:0 0 var(--radius) var(--radius); box-shadow:var(--shadow); padding:0 14px 20px; margin-bottom:16px; }
+.cal-body { display:none; background:var(--surface); border-radius:0 0 var(--radius) var(--radius); box-shadow:var(--shadow); padding:0 14px calc(20px + env(safe-area-inset-bottom)); margin-bottom:16px; }
 .cal-body.open { display:block; }
 .cal-nav { display:flex; align-items:center; justify-content:space-between; padding:14px 0 10px; }
 .cal-nav-btn { background:none; border:1.5px solid var(--ink-faint); border-radius:8px; width:32px; height:32px; font-size:16px; cursor:pointer; display:flex; align-items:center; justify-content:center; color:var(--ink-muted); transition:all 0.15s; }
@@ -227,9 +262,7 @@ body { font-family:'DM Sans',sans-serif; background:var(--bg); color:var(--ink);
 .cal-day:hover:not(.empty):not(.today) { filter:brightness(0.9); }
 .cal-day-num { font-size:12px; line-height:1; }
 .cal-job-label { font-size:7px; text-align:center; line-height:1.15; margin-top:2px; max-width:100%; overflow:hidden; word-break:break-word; padding:0 1px; }
-.booked-confirmed .cal-job-label, .booked-pending .cal-job-label { color:rgba(255,255,255,0.9); }
-
-/* DAY POPUP */
+.booked-confirmed .cal-job-label,.booked-pending .cal-job-label { color:rgba(255,255,255,0.9); }
 .day-popup { display:none; position:fixed; inset:0; z-index:200; align-items:center; justify-content:center; background:rgba(26,24,20,0.4); backdrop-filter:blur(3px); }
 .day-popup.open { display:flex; }
 .day-popup-card { background:var(--surface); border-radius:20px; padding:24px; width:calc(100% - 48px); max-width:360px; box-shadow:0 12px 40px rgba(26,24,20,0.2); animation:popIn 0.2s cubic-bezier(0.16,1,0.3,1); }
@@ -243,12 +276,13 @@ body { font-family:'DM Sans',sans-serif; background:var(--bg); color:var(--ink);
 .day-popup-job-pay  { font-size:13px; font-weight:600; margin-top:5px; }
 .confirmed .day-popup-job-pay { color:var(--green-dark); }
 .pending   .day-popup-job-pay { color:var(--yellow-dark); }
-.day-popup-close { width:100%; margin-top:14px; background:var(--bg); border:none; border-radius:10px; padding:12px; font-family:'DM Sans',sans-serif; font-size:14px; font-weight:500; color:var(--ink-muted); cursor:pointer; }
+.day-popup-close { width:100%; margin-top:14px; background:var(--bg); border:none; border-radius:10px; padding:12px; font-size:14px; font-weight:500; color:var(--ink-muted); cursor:pointer; }
 
 /* FAB */
-.fab { position:fixed; bottom:28px; right:calc(50% - 240px + 20px); width:56px; height:56px; background:var(--ink); color:white; border-radius:50%; border:none; font-size:28px; cursor:pointer; box-shadow:0 6px 24px rgba(26,24,20,0.28); display:flex; align-items:center; justify-content:center; z-index:50; transition:transform 0.2s; }
+.fab { position:fixed; bottom:calc(28px + env(safe-area-inset-bottom)); right:calc(50% - 240px + 20px); width:60px; height:60px; background:var(--ink); color:white; border-radius:50%; border:none; font-size:28px; cursor:pointer; box-shadow:0 6px 24px rgba(26,24,20,0.28); display:flex; align-items:center; justify-content:center; z-index:50; transition:transform 0.2s; }
 .fab:hover { transform:scale(1.08); }
-.fab:active { transform:scale(0.95); }
+.fab:active { transform:scale(0.93); }
+.fab.hidden { display:none; }
 @media(max-width:480px){ .fab{ right:20px; } }
 
 .fade-in { animation:fadeIn 0.5s ease both; }
@@ -257,19 +291,46 @@ body { font-family:'DM Sans',sans-serif; background:var(--bg); color:var(--ink);
 </head>
 <body>
 
-<!-- SYNC STATUS -->
 <div class="sync-bar" id="syncBar">
   <div class="sync-dot" id="syncDot"></div>
   <span id="syncText">Connecting…</span>
 </div>
 
-<div class="header fade-in">
-  <div class="header-left"><h1>2026<br>Revenue</h1><p>Franklin, TN · Videographer</p></div>
-  <div class="date-badge" id="dateBadge"></div>
+<!-- HEADER (tap to toggle settings) -->
+<div class="header fade-in" onclick="toggleSettings()">
+  <div class="header-left">
+    <h1 id="headerTitle">Revenue</h1>
+    <p>Franklin, TN · Videographer</p>
+  </div>
+  <div class="header-right">
+    <div class="date-badge" id="dateBadge"></div>
+    <div class="settings-hint">⚙ tap to edit settings</div>
+  </div>
+</div>
+
+<!-- SETTINGS PANEL -->
+<div class="settings-panel hidden" id="settingsPanel">
+  <div class="settings-title">Settings</div>
+  <div class="settings-row">
+    <label>Annual Goal</label>
+    <div class="currency-wrap"><input type="number" id="settingsGoal" placeholder="100000"></div>
+  </div>
+  <button class="settings-save-btn" onclick="saveSettings()">Update Goal & Targets</button>
+  <div class="settings-divider"></div>
+  <div style="font-size:12px;color:var(--ink-muted);margin-bottom:8px">Monthly target auto-calculates as goal ÷ 12</div>
+  <button class="settings-danger" onclick="confirmResetYear()">⚠ Reset current year data</button>
+</div>
+
+<!-- YEAR SWITCHER -->
+<div class="year-switcher fade-in" id="yearSwitcher" style="animation-delay:0.03s">
+  <button class="year-btn" id="yearPrevBtn" onclick="switchYear(-1)">‹</button>
+  <div class="year-label" id="yearLabel"></div>
+  <div class="year-badge" id="yearBadge">Current</div>
+  <button class="year-btn" id="yearNextBtn" onclick="switchYear(1)">›</button>
 </div>
 
 <!-- TRACK BANNER -->
-<div class="track-banner fade-in" id="trackBanner" style="animation-delay:0.03s">
+<div class="track-banner fade-in" id="trackBanner" style="animation-delay:0.05s">
   <div class="track-top-row">
     <div class="track-pill" id="trackPill"></div>
     <div class="track-details">
@@ -293,11 +354,11 @@ body { font-family:'DM Sans',sans-serif; background:var(--bg); color:var(--ink);
 </div>
 
 <!-- HERO -->
-<div class="revenue-hero fade-in" style="animation-delay:0.06s">
+<div class="revenue-hero fade-in" style="animation-delay:0.08s">
   <div class="card-label">Total Earned</div>
   <div class="revenue-amount"><span class="currency">$</span><span id="heroAmount">0</span></div>
   <div class="revenue-goal-row">
-    <span class="goal-text">Goal: $100,000</span>
+    <span class="goal-text" id="heroGoalText">Goal: $100,000</span>
     <span class="pct" id="heroPct">0%</span>
   </div>
   <div class="dual-track">
@@ -318,7 +379,7 @@ body { font-family:'DM Sans',sans-serif; background:var(--bg); color:var(--ink);
 </div>
 
 <!-- STATS -->
-<div class="stats-row fade-in" style="animation-delay:0.1s">
+<div class="stats-row fade-in" style="animation-delay:0.11s">
   <div class="stat-card"><div class="stat-val" id="statMonthly">—</div><div class="stat-lbl">Needed/Mo</div></div>
   <div class="stat-card"><div class="stat-val" id="statDaily">—</div><div class="stat-lbl">$/Day Pace</div></div>
   <div class="stat-card"><div class="stat-val" id="statJobsLeft">—</div><div class="stat-lbl">Jobs to Go</div></div>
@@ -333,7 +394,7 @@ body { font-family:'DM Sans',sans-serif; background:var(--bg); color:var(--ink);
 </div>
 
 <!-- JOBS -->
-<div class="section-row fade-in" style="animation-delay:0.16s">
+<div class="section-row fade-in" style="animation-delay:0.15s">
   <div class="section-title">All Jobs</div>
   <div class="filter-pills">
     <div class="filter-pill active-all" onclick="setFilter('all',this)">All</div>
@@ -341,12 +402,12 @@ body { font-family:'DM Sans',sans-serif; background:var(--bg); color:var(--ink);
     <div class="filter-pill" onclick="setFilter('pending',this)">◎ Pending</div>
   </div>
 </div>
-<div class="card fade-in" style="animation-delay:0.16s">
+<div class="card fade-in" style="animation-delay:0.15s">
   <div class="job-list" id="jobList"></div>
 </div>
 
 <!-- CALENDAR -->
-<div class="cal-toggle-row fade-in" id="calToggle" onclick="toggleCal()" style="animation-delay:0.19s">
+<div class="cal-toggle-row fade-in" id="calToggle" onclick="toggleCal()" style="animation-delay:0.17s">
   <div class="cal-toggle-left">
     <div class="cal-toggle-title">Year Calendar</div>
     <div class="cal-toggle-sub" id="calToggleSub">Tap to view booked days</div>
@@ -363,7 +424,7 @@ body { font-family:'DM Sans',sans-serif; background:var(--bg); color:var(--ink);
 </div>
 
 <!-- FAB -->
-<button class="fab" onclick="openAddModal()">+</button>
+<button class="fab" id="fab" onclick="openAddModal()">+</button>
 
 <!-- JOB MODAL -->
 <div class="modal-overlay" id="jobModalOverlay" onclick="closeOnOverlay(event,'jobModalOverlay')">
@@ -378,34 +439,18 @@ body { font-family:'DM Sans',sans-serif; background:var(--bg); color:var(--ink);
     <div class="field-group"><label>Job Name</label><input type="text" id="jName" placeholder="e.g. Wedding Shoot"></div>
     <div class="field-group"><label>Start Date</label><input type="date" id="jStart"></div>
     <div class="field-group"><label>End Date (optional)</label><input type="date" id="jEnd"></div>
-    <!-- Confirmed: single pay field -->
     <div id="jConfirmedPay">
-      <div class="field-group">
-        <label>Amount Paid</label>
-        <div class="currency-wrap"><input type="number" id="jPay" placeholder="5000"></div>
-      </div>
+      <div class="field-group"><label>Amount Paid</label><div class="currency-wrap"><input type="number" id="jPay" placeholder="5000"></div></div>
     </div>
-    <!-- Pending: exact vs range toggle -->
     <div id="jPendingPay" style="display:none">
       <div class="pay-mode-row">
         <button class="pay-mode-btn active" id="payModeExact" onclick="setPayMode('exact')">Exact Amount</button>
         <button class="pay-mode-btn" id="payModeRange" onclick="setPayMode('range')">Range (Low–High)</button>
       </div>
-      <div id="jExactGroup">
-        <div class="field-group">
-          <label>Agreed Amount</label>
-          <div class="currency-wrap"><input type="number" id="jExact" placeholder="9500"></div>
-        </div>
-      </div>
+      <div id="jExactGroup"><div class="field-group"><label>Agreed Amount</label><div class="currency-wrap"><input type="number" id="jExact" placeholder="9500"></div></div></div>
       <div id="jRangeGroup" style="display:none">
-        <div class="field-group">
-          <label>Low Estimate</label>
-          <div class="currency-wrap"><input type="number" id="jRangeLow" placeholder="4000"></div>
-        </div>
-        <div class="field-group">
-          <label>High Estimate</label>
-          <div class="currency-wrap"><input type="number" id="jRangeHigh" placeholder="6000"></div>
-        </div>
+        <div class="field-group"><label>Low Estimate</label><div class="currency-wrap"><input type="number" id="jRangeLow" placeholder="4000"></div></div>
+        <div class="field-group"><label>High Estimate</label><div class="currency-wrap"><input type="number" id="jRangeHigh" placeholder="6000"></div></div>
       </div>
     </div>
     <div class="field-group"><label>Notes (optional)</label><textarea id="jDesc" rows="2" placeholder="Any details about this gig…"></textarea></div>
@@ -427,10 +472,7 @@ body { font-family:'DM Sans',sans-serif; background:var(--bg); color:var(--ink);
     <div class="modal-handle"></div>
     <h3>Mark as Complete</h3>
     <div class="complete-modal-job" id="completeJobName"></div>
-    <div class="field-group">
-      <label>Amount Received</label>
-      <div class="currency-wrap"><input type="number" id="completePayInput" placeholder="0"></div>
-    </div>
+    <div class="field-group"><label>Amount Received</label><div class="currency-wrap"><input type="number" id="completePayInput" placeholder="0"></div></div>
     <div class="modal-actions">
       <button class="btn-cancel" onclick="closeModal('completeModalOverlay')">Cancel</button>
       <button class="btn-save" onclick="confirmComplete()">Confirm & Save</button>
@@ -447,16 +489,10 @@ body { font-family:'DM Sans',sans-serif; background:var(--bg); color:var(--ink);
   </div>
 </div>
 
-<!-- Firebase SDKs -->
 <script type="module">
 import { initializeApp } from 'https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js';
 import { getDatabase, ref, onValue, set } from 'https://www.gstatic.com/firebasejs/10.12.2/firebase-database.js';
 
-// ─────────────────────────────────────────────────────────────────────────────
-// 🔧 PASTE YOUR FIREBASE CONFIG HERE
-// Replace the placeholder values below with your actual Firebase config.
-// Get it from: Firebase Console → Project Settings → Your Apps → SDK setup
-// ─────────────────────────────────────────────────────────────────────────────
 const firebaseConfig = {
   apiKey: "AIzaSyB4mkMQnLnIogCf-ePoGrhLwTQva0v0G6A",
   authDomain: "yearly-income-tracker.firebaseapp.com",
@@ -467,121 +503,131 @@ const firebaseConfig = {
   appId: "1:562443688303:web:bf1ed1280a064f5b89f09a",
   measurementId: "G-YYNMV11HDF"
 };
-// ─────────────────────────────────────────────────────────────────────────────
 
-const STORAGE_KEY = 'revenue2026_state';
-const TODAY = new Date(2026,2,12);
-const CUR_M = TODAY.getMonth();
+// ── CONSTANTS ──────────────────────────────────────────────────────────────
 const MONTH_NAMES = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
 const MONTH_FULL  = ['January','February','March','April','May','June','July','August','September','October','November','December'];
 const DOW         = ['Su','Mo','Tu','We','Th','Fr','Sa'];
+const REAL_TODAY  = new Date(); // uses actual device date
+const CURRENT_YEAR = REAL_TODAY.getFullYear();
 
+// ── STATE ──────────────────────────────────────────────────────────────────
 let db = null;
-let dbRef = null;
+let dbRefs = {};
 let editingIdx = null;
 let completeTargetIdx = null;
 let jobType = 'confirmed';
 let payMode = 'exact';
 let activeFilter = 'all';
-let calMonth = CUR_M;
+let calMonth = REAL_TODAY.getMonth();
 let calOpen = false;
 let isSaving = false;
+let settingsOpen = false;
+let viewingYear = CURRENT_YEAR;
+let allYearStates = {}; // cache per-year state
 
-// ── DEFAULT STATE ─────────────────────────────────────────────────────────────
-const DEFAULT_STATE = {
-  goal: 100000,
-  months: [
-    {target:4000},{target:8000},{target:4000},{target:9500},{target:13000},{target:9000},
-    {target:9000},{target:11000},{target:11000},{target:13000},{target:9000},{target:8500},
-  ],
-  jobs:[
-    {name:"Home Depot Shoot",    month:2,startDay:27,endMonth:3,endDay:5, desc:"",exactPay:null,rangeLow:4000,rangeHigh:6000,payMode:"range",type:"pending"},
-    {name:"Pau Fu Concert Tour", month:3,startDay:7, endMonth:4,endDay:8, desc:"",exactPay:9500,rangeLow:null,rangeHigh:null,payMode:"exact",type:"pending"},
-    {name:"Incentive Trip Shoot",month:4,startDay:8, endMonth:4,endDay:13,desc:"",exactPay:null,rangeLow:4000,rangeHigh:6000,payMode:"range",type:"pending"},
-  ]
-};
-
-let state = JSON.parse(JSON.stringify(DEFAULT_STATE));
-
-// ── SYNC STATUS ───────────────────────────────────────────────────────────────
-function setSyncStatus(status, text){
-  const dot = document.getElementById('syncDot');
-  const txt = document.getElementById('syncText');
-  dot.className = 'sync-dot ' + status;
-  txt.textContent = text;
+function makeDefaultState(year, prevState=null) {
+  const goal = prevState ? prevState.goal : 100000;
+  const monthTarget = Math.round((goal / 12) * 100) / 100;
+  const seedJobs = year === 2026 ? [
+    {name:"Focus Fuel Editing Work",       month:0,startDay:1, desc:"",pay:1900, payMode:null,exactPay:null,rangeLow:null,rangeHigh:null,type:"confirmed"},
+    {name:"Grammy's 26 MasterCard Videos", month:1,startDay:1, desc:"",pay:10000,payMode:null,exactPay:null,rangeLow:null,rangeHigh:null,type:"confirmed"},
+    {name:"Home Depot Shoot",              month:2,startDay:27,endMonth:3,endDay:5, desc:"",exactPay:null,rangeLow:4000,rangeHigh:6000,payMode:"range",type:"pending"},
+    {name:"Pau Fu Concert Tour",           month:3,startDay:7, endMonth:4,endDay:8, desc:"",exactPay:9500,rangeLow:null,rangeHigh:null,payMode:"exact",type:"pending"},
+    {name:"Incentive Trip Shoot",          month:4,startDay:8, endMonth:4,endDay:13,desc:"",exactPay:null,rangeLow:4000,rangeHigh:6000,payMode:"range",type:"pending"},
+  ] : [];
+  return {
+    goal,
+    year,
+    months: Array.from({length:12}, () => ({target: monthTarget})),
+    jobs: seedJobs
+  };
 }
 
-// ── FIREBASE INIT ─────────────────────────────────────────────────────────────
-function initFirebase(){
-  try {
-    if(firebaseConfig.apiKey === 'PASTE_YOUR_API_KEY'){
-      setSyncStatus('', 'Saved locally (no Firebase config yet)');
-      loadFromLocalStorage();
-      return;
+// Current state for the year being viewed
+function getState() { return allYearStates[viewingYear]; }
+function setState(s) { allYearStates[viewingYear] = s; }
+
+// ── SYNC ───────────────────────────────────────────────────────────────────
+function setSyncStatus(status, text) {
+  document.getElementById('syncDot').className = 'sync-dot ' + status;
+  document.getElementById('syncText').textContent = text;
+}
+
+function dbKey(year) { return `revenue${year}`; }
+
+function listenYear(year) {
+  if(!db) return;
+  if(dbRefs[year]) return; // already listening
+  const r = ref(db, dbKey(year));
+  dbRefs[year] = r;
+  onValue(r, (snap) => {
+    if(isSaving) return;
+    const data = snap.val();
+    if(data) {
+      allYearStates[year] = data;
+    } else {
+      // New year — init with prev year's goal if available
+      const prevState = allYearStates[year-1] || null;
+      allYearStates[year] = makeDefaultState(year, prevState);
+      if(year === CURRENT_YEAR) saveYear(year);
     }
+    if(year === viewingYear) render();
+    setSyncStatus('connected', 'Synced · ' + new Date().toLocaleTimeString([],{hour:'2-digit',minute:'2-digit'}));
+  }, () => {
+    setSyncStatus('error', 'Sync error — using local data');
+    loadLocalState(year);
+  });
+}
+
+function saveYear(year) {
+  const s = allYearStates[year];
+  if(!s) return;
+  // Always save locally
+  try { localStorage.setItem(`revenue_${year}`, JSON.stringify(s)); } catch(e){}
+  if(!db) return;
+  isSaving = true;
+  setSyncStatus('saving', 'Saving…');
+  set(ref(db, dbKey(year)), s)
+    .then(() => {
+      setSyncStatus('connected', 'Synced · ' + new Date().toLocaleTimeString([],{hour:'2-digit',minute:'2-digit'}));
+      setTimeout(() => { isSaving = false; }, 300);
+    })
+    .catch(() => {
+      setSyncStatus('error', 'Sync failed — saved locally');
+      isSaving = false;
+    });
+}
+
+function loadLocalState(year) {
+  try {
+    const s = localStorage.getItem(`revenue_${year}`);
+    if(s) { allYearStates[year] = JSON.parse(s); render(); return; }
+  } catch(e){}
+  allYearStates[year] = makeDefaultState(year);
+  render();
+}
+
+function persistAndRender() {
+  saveYear(viewingYear);
+  render();
+}
+
+function initFirebase() {
+  try {
     const app = initializeApp(firebaseConfig);
     db = getDatabase(app);
-    dbRef = ref(db, 'revenue2026');
     setSyncStatus('saving', 'Connecting…');
-
-    // Listen for real-time updates from Firebase
-    onValue(dbRef, (snapshot) => {
-      if(isSaving) return; // avoid echo
-      const data = snapshot.val();
-      if(data){
-        state = data;
-        render();
-        setSyncStatus('connected', 'Synced · ' + new Date().toLocaleTimeString([], {hour:'2-digit',minute:'2-digit'}));
-      } else {
-        // First time — push default state
-        saveToFirebase();
-      }
-    }, (error) => {
-      setSyncStatus('error', 'Sync error — saved locally');
-      loadFromLocalStorage();
-    });
-
-  } catch(e){
+    // Listen to current year + adjacent years
+    listenYear(CURRENT_YEAR);
+    listenYear(CURRENT_YEAR - 1);
+  } catch(e) {
     setSyncStatus('error', 'Firebase error — saved locally');
-    loadFromLocalStorage();
+    loadLocalState(CURRENT_YEAR);
   }
 }
 
-function saveToFirebase(){
-  if(!db){ saveToLocalStorage(); return; }
-  isSaving = true;
-  setSyncStatus('saving', 'Saving…');
-  set(dbRef, state)
-    .then(()=>{
-      saveToLocalStorage(); // always keep local backup
-      setSyncStatus('connected', 'Synced · ' + new Date().toLocaleTimeString([],{hour:'2-digit',minute:'2-digit'}));
-      setTimeout(()=>{ isSaving=false; },300);
-    })
-    .catch(()=>{
-      saveToLocalStorage();
-      setSyncStatus('error', 'Sync failed — saved locally');
-      isSaving=false;
-    });
-}
-
-function saveToLocalStorage(){
-  try { localStorage.setItem(STORAGE_KEY, JSON.stringify(state)); } catch(e){}
-}
-
-function loadFromLocalStorage(){
-  try {
-    const saved = localStorage.getItem(STORAGE_KEY);
-    if(saved){ state = JSON.parse(saved); }
-  } catch(e){}
-  render();
-}
-
-function persistAndRender(){
-  saveToFirebase();
-  render();
-}
-
-// ── HELPERS ───────────────────────────────────────────────────────────────────
+// ── HELPERS ────────────────────────────────────────────────────────────────
 function fmt(n){ if(!n) return '$0'; return n>=1000?'$'+(n/1000).toFixed(n%1000===0?0:1)+'k':'$'+n.toLocaleString(); }
 function fmtFull(n){ return '$'+Math.round(n||0).toLocaleString(); }
 
@@ -605,84 +651,149 @@ function jobRange(j){
   return s;
 }
 
-// Earned = ONLY confirmed (paid) jobs + seed months (Jan/Feb)
-function totalEarned(){
-  const seedEarned = 11900; // Jan 1900 + Feb 10000 — hardcoded baseline
-  const jobEarned = state.jobs
-    .filter(j=>j.type==='confirmed')
-    .reduce((s,j)=>s+(j.pay||0),0);
-  return seedEarned + jobEarned;
-}
+function totalEarned(s){ return (s.jobs||[]).filter(j=>j.type==='confirmed').reduce((t,j)=>t+(j.pay||0),0); }
+function monthEarned(s,mi){ return (s.jobs||[]).filter(j=>j.type==='confirmed'&&j.month===mi).reduce((t,j)=>t+(j.pay||0),0); }
+function totalPipeline(s){ return (s.jobs||[]).filter(j=>j.type==='pending').reduce((t,j)=>t+jobMid(j),0); }
+function jobsForMonth(s,mi){ return (s.jobs||[]).filter(j=>j.month===mi); }
+function monthProjected(s,mi){ return (s.jobs||[]).filter(j=>j.type==='pending'&&j.month===mi).reduce((t,j)=>t+jobMid(j),0); }
+function monthTarget(s){ return Math.round((s.goal/12)*100)/100; }
 
-// Per-month earned: seed for Jan/Feb, confirmed jobs for rest
-function monthEarned(mi){
-  if(mi===0) return 1900;
-  if(mi===1) return 10000;
-  return state.jobs.filter(j=>j.type==='confirmed'&&j.month===mi).reduce((s,j)=>s+(j.pay||0),0);
-}
-
-function totalPipeline(){
-  return state.jobs.filter(j=>j.type==='pending').reduce((s,j)=>s+jobMid(j),0);
-}
-
-function jobsForMonth(mi){ return state.jobs.filter(j=>j.month===mi); }
-
-function monthProjected(mi){
-  return state.jobs.filter(j=>j.type==='pending'&&j.month===mi).reduce((s,j)=>s+jobMid(j),0);
-}
-
-function calcTrajectory(){
-  const doy=Math.floor((TODAY-new Date(2026,0,1))/86400000)+1;
-  const expected=(doy/365)*state.goal;
-  const earned=totalEarned();
+function calcTrajectory(s, year){
+  const today = year===CURRENT_YEAR ? REAL_TODAY : new Date(year,11,31);
+  const doy = Math.floor((today - new Date(year,0,1))/86400000)+1;
+  const expected = (doy/365)*s.goal;
+  const earned = totalEarned(s);
   return {delta:earned-expected, expected, pctOff:Math.abs((earned-expected)/Math.max(1,expected)*100)};
 }
 
-// ── RENDER ────────────────────────────────────────────────────────────────────
-function render(){
-  const earned=totalEarned(), pipeline=totalPipeline();
-  const pct=Math.min(100,(earned/state.goal)*100);
-  const projPct=Math.min(100,((earned+pipeline)/state.goal)*100);
-  const remaining=state.goal-earned;
-  const daysLeft=Math.max(1,Math.floor((new Date(2026,11,31)-TODAY)/86400000));
-  const monthsLeft=daysLeft/30.4;
+const isCurrentYear = () => viewingYear === CURRENT_YEAR;
 
-  document.getElementById('heroAmount').textContent=earned.toLocaleString();
-  document.getElementById('heroPct').textContent=pct.toFixed(1)+'%';
-  document.getElementById('heroEarnedBar').style.width=pct+'%';
-  document.getElementById('heroProjectedBar').style.width=projPct+'%';
-  document.getElementById('heroRemaining').textContent=fmtFull(remaining);
-  document.getElementById('heroPipelineVal').textContent=fmt(pipeline);
-  document.getElementById('heroJobs').textContent=state.jobs.filter(j=>j.type==='confirmed').length;
-  document.getElementById('statMonthly').textContent=fmt(remaining/Math.max(1,monthsLeft));
-  document.getElementById('statDaily').textContent=fmt(remaining/Math.max(1,daysLeft));
-  document.getElementById('statJobsLeft').textContent='~'+Math.ceil(remaining/4500);
+// ── YEAR SWITCHER ─────────────────────────────────────────────────────────
+window.switchYear = function(dir){
+  const newYear = viewingYear + dir;
+  // Don't go future past next year or before 2020
+  if(newYear > CURRENT_YEAR + 1 || newYear < 2020) return;
+  viewingYear = newYear;
+  // Load if not already loaded
+  if(!allYearStates[viewingYear]) {
+    if(db) listenYear(viewingYear);
+    else loadLocalState(viewingYear);
+  }
+  calMonth = viewingYear === CURRENT_YEAR ? REAL_TODAY.getMonth() : 0;
+  render();
+};
+
+// ── SETTINGS ─────────────────────────────────────────────────────────────
+window.toggleSettings = function(){
+  settingsOpen = !settingsOpen;
+  const panel = document.getElementById('settingsPanel');
+  panel.classList.toggle('hidden', !settingsOpen);
+  if(settingsOpen){
+    const s = getState();
+    if(s) document.getElementById('settingsGoal').value = s.goal || 100000;
+  }
+};
+
+window.saveSettings = function(){
+  const s = getState();
+  if(!s) return;
+  const newGoal = parseFloat(document.getElementById('settingsGoal').value);
+  if(isNaN(newGoal)||newGoal<=0){alert('Please enter a valid goal amount.');return;}
+  const mt = Math.round((newGoal/12)*100)/100;
+  s.goal = newGoal;
+  s.months = Array.from({length:12}, () => ({target:mt}));
+  setState(s);
+  settingsOpen = false;
+  document.getElementById('settingsPanel').classList.add('hidden');
+  persistAndRender();
+};
+
+window.confirmResetYear = function(){
+  if(!confirm(`Reset all ${viewingYear} data? This cannot be undone.`)) return;
+  const prevState = allYearStates[viewingYear-1]||null;
+  setState(makeDefaultState(viewingYear, prevState));
+  persistAndRender();
+};
+
+// ── RENDER ────────────────────────────────────────────────────────────────
+function render(){
+  const s = getState();
+  if(!s){ return; }
+
+  const isCurrent = isCurrentYear();
+  const today = isCurrent ? REAL_TODAY : new Date(viewingYear,11,31);
+  const curM = today.getMonth();
+  const earned = totalEarned(s);
+  const pipeline = totalPipeline(s);
+  const pct = Math.min(100,(earned/s.goal)*100);
+  const projPct = Math.min(100,((earned+pipeline)/s.goal)*100);
+  const remaining = s.goal - earned;
+  const daysLeft = Math.max(1,Math.floor((new Date(viewingYear,11,31)-today)/86400000));
+  const monthsLeft = daysLeft/30.4;
+  const mt = monthTarget(s);
+
+  // Header
+  document.getElementById('headerTitle').textContent = viewingYear + ' Revenue';
+
+  // Year switcher
+  document.getElementById('yearLabel').textContent = viewingYear;
+  document.getElementById('yearBadge').textContent = isCurrent ? 'Current' : viewingYear < CURRENT_YEAR ? 'Past' : 'Future';
+  document.getElementById('yearBadge').className = 'year-badge' + (isCurrent?'':' past');
+  document.getElementById('yearPrevBtn').disabled = viewingYear <= 2020;
+  document.getElementById('yearNextBtn').disabled = viewingYear >= CURRENT_YEAR + 1;
+
+  // FAB — hide for past/future years
+  document.getElementById('fab').className = 'fab' + (isCurrent?'':' hidden');
+
+  // Hero
+  document.getElementById('heroAmount').textContent = earned.toLocaleString();
+  document.getElementById('heroPct').textContent = pct.toFixed(1)+'%';
+  document.getElementById('heroEarnedBar').style.width = pct+'%';
+  document.getElementById('heroProjectedBar').style.width = projPct+'%';
+  document.getElementById('heroRemaining').textContent = fmtFull(remaining);
+  document.getElementById('heroPipelineVal').textContent = fmt(pipeline);
+  document.getElementById('heroJobs').textContent = (s.jobs||[]).filter(j=>j.type==='confirmed').length;
+  document.getElementById('heroGoalText').textContent = 'Goal: ' + fmtFull(s.goal);
+
+  // Stats
+  document.getElementById('statMonthly').textContent = fmt(remaining/Math.max(1,monthsLeft));
+  document.getElementById('statDaily').textContent = fmt(remaining/Math.max(1,daysLeft));
+  document.getElementById('statJobsLeft').textContent = '~'+Math.ceil(remaining/4500);
 
   // Track banner
-  const {delta,expected,pctOff}=calcTrajectory();
-  const banner=document.getElementById('trackBanner');
-  banner.className=(delta>=0?'track-banner ahead':'track-banner behind')+' fade-in';
-  document.getElementById('trackPill').textContent=delta>=0?'On Track':'Behind';
-  document.getElementById('trackDelta').textContent=delta>=0?fmtFull(delta)+' ahead of pace ↑':fmtFull(Math.abs(delta))+' behind pace ↓';
-  document.getElementById('trackSub').textContent='Expected by today: '+fmtFull(expected);
-  document.getElementById('trackPct').textContent=(delta>=0?'+':'-')+pctOff.toFixed(0)+'%';
-  document.getElementById('trackBarBehind').style.width=Math.min(100,(expected/state.goal)*100)+'%';
-  document.getElementById('trackBarEarned').style.width=Math.min(100,(earned/state.goal)*100)+'%';
+  const {delta,expected,pctOff} = calcTrajectory(s, viewingYear);
+  const banner = document.getElementById('trackBanner');
+  if(!isCurrent){
+    banner.className = 'track-banner readonly fade-in';
+    document.getElementById('trackPill').textContent = viewingYear < CURRENT_YEAR ? 'Final' : 'Future';
+    document.getElementById('trackDelta').textContent = viewingYear < CURRENT_YEAR
+      ? (earned>=s.goal ? 'Goal reached! 🎉' : fmtFull(s.goal-earned)+' short of goal')
+      : 'Planning mode';
+    document.getElementById('trackSub').textContent = 'Total earned: '+fmtFull(earned)+' of '+fmtFull(s.goal);
+    document.getElementById('trackPct').textContent = pct.toFixed(0)+'%';
+  } else {
+    banner.className=(delta>=0?'track-banner ahead':'track-banner behind')+' fade-in';
+    document.getElementById('trackPill').textContent=delta>=0?'On Track':'Behind';
+    document.getElementById('trackDelta').textContent=delta>=0?fmtFull(delta)+' ahead of pace ↑':fmtFull(Math.abs(delta))+' behind pace ↓';
+    document.getElementById('trackSub').textContent='Expected by today: '+fmtFull(expected);
+    document.getElementById('trackPct').textContent=(delta>=0?'+':'-')+pctOff.toFixed(0)+'%';
+  }
+  document.getElementById('trackBarBehind').style.width=Math.min(100,(expected/s.goal)*100)+'%';
+  document.getElementById('trackBarEarned').style.width=Math.min(100,(earned/s.goal)*100)+'%';
 
   // Month grid
-  const grid=document.getElementById('monthGrid');
-  grid.innerHTML='';
-  state.months.forEach((m,i)=>{
-    const me=monthEarned(i);
-    const proj=monthProjected(i);
-    const target=m.target||0;
-    const ePct=target>0?Math.min(100,(me/target)*100):0;
-    const pPct=target>0?Math.min(100,(proj/target)*100):0;
-    // A month is "done" if earned >= target, or if it's a past month with seed data
-    const isDone=(i<2)||(me>0&&me>=target);
-    const isCurrent=i===CUR_M;
-    const isFuture=i>CUR_M&&!isDone;
-    const cls=isDone?'done':isCurrent?'current':isFuture?'locked':'';
+  const grid = document.getElementById('monthGrid');
+  grid.innerHTML = '';
+  for(let i=0;i<12;i++){
+    const me = monthEarned(s,i);
+    const proj = monthProjected(s,i);
+    const target = mt;
+    const ePct = target>0?Math.min(100,(me/target)*100):0;
+    const pPct = target>0?Math.min(100,(proj/target)*100):0;
+    const isDone = me>0&&me>=target;
+    const isCur = isCurrent&&i===curM;
+    const isFuture = i>(isCurrent?curM:11)&&!isDone;
+    const cls = isDone?'done':isCur?'current':isFuture?'locked':'';
     grid.innerHTML+=`<div class="month-item ${cls}" onclick="openMonthModal(${i})">
       ${isDone?'<div class="month-check">✓</div>':''}
       <div class="month-name">${MONTH_NAMES[i]}</div>
@@ -693,19 +804,21 @@ function render(){
         <div class="month-bar-projected" style="width:${pPct}%"></div>
         <div class="month-bar-earned" style="width:${ePct}%"></div>
       </div></div>`;
-  });
+  }
 
-  renderJobList();
-  if(calOpen) renderCalendar();
-  updateCalToggleSub();
+  renderJobList(s, isCurrent, curM);
+  if(calOpen) renderCalendar(s, isCurrent, curM);
+  updateCalToggleSub(s);
 }
 
-// ── JOB LIST ──────────────────────────────────────────────────────────────────
-function renderJobList(){
-  const el=document.getElementById('jobList');
-  if(!state.jobs.length){el.innerHTML='<div class="empty-state">No jobs yet. Tap + to add one.</div>';return;}
+// ── JOB LIST ──────────────────────────────────────────────────────────────
+function renderJobList(s, isCurrent, curM){
+  const el = document.getElementById('jobList');
+  const jobs = s.jobs||[];
+  if(!jobs.length){el.innerHTML='<div class="empty-state">No jobs yet.'+(isCurrent?' Tap + to add one.':'')+'</div>';return;}
   el.innerHTML='';
-  const sorted=[...state.jobs].map((j,i)=>({...j,_i:i})).sort((a,b)=>a.month-b.month||a.startDay-b.startDay);
+  if(!isCurrent) el.innerHTML += '<div class="readonly-notice">Viewing '+viewingYear+' — read only</div>';
+  const sorted=[...jobs].map((j,i)=>({...j,_i:i})).sort((a,b)=>a.month-b.month||a.startDay-b.startDay);
   sorted.forEach((job,si)=>{
     const isLast=si===sorted.length-1;
     const hidden=(activeFilter==='confirmed'&&job.type!=='confirmed')||(activeFilter==='pending'&&job.type!=='pending');
@@ -723,50 +836,45 @@ function renderJobList(){
         <div class="job-dates">${jobRange(job)}</div>
         ${job.desc?`<div class="job-desc-text">${job.desc}</div>`:''}
         <div class="job-pay ${job.type}-pay">${jobPayLabel(job)}</div>
-        <div class="job-actions">
-          ${job.type==='pending'
-            ?`<button class="mark-complete-btn" onclick="openCompleteModal(${job._i})">✓ Mark Complete</button>`
-            :``}
+        ${isCurrent?`<div class="job-actions">
+          ${job.type==='pending'?`<button class="mark-complete-btn" onclick="openCompleteModal(${job._i})">✓ Mark Complete</button>`:''}
           <button class="job-btn edit" onclick="openEditModal(${job._i})">✎ Edit</button>
-          ${job.type==='confirmed'?`<button class="job-btn revert" onclick="revertJob(${job._i})">↩ Revert to pending</button>`:''}
+          ${job.type==='confirmed'?`<button class="job-btn revert" onclick="revertJob(${job._i})">↩ Revert</button>`:''}
           <button class="job-btn del" onclick="deleteJob(${job._i})">✕ Remove</button>
-        </div>
+        </div>`:''}
       </div></div>`;
   });
 }
 
-// ── FILTER ────────────────────────────────────────────────────────────────────
+// ── FILTER ────────────────────────────────────────────────────────────────
 window.setFilter = function(f,btn){
   activeFilter=f;
   document.querySelectorAll('.filter-pill').forEach(p=>p.className='filter-pill');
   btn.className='filter-pill active-'+f;
-  renderJobList();
+  const s=getState(); if(s) renderJobList(s,isCurrentYear(),REAL_TODAY.getMonth());
 };
 
-// ── MONTH MODAL ───────────────────────────────────────────────────────────────
+// ── MONTH MODAL ───────────────────────────────────────────────────────────
 window.openMonthModal = function(idx){
-  const m=state.months[idx];
-  const me=monthEarned(idx);
-  const proj=monthProjected(idx);
-  const jobs=jobsForMonth(idx);
-  const gap=(m.target||0)-me;
-  const ePct=m.target>0?(me/m.target*100).toFixed(0):0;
+  const s=getState(); if(!s) return;
+  const me=monthEarned(s,idx), proj=monthProjected(s,idx);
+  const jobs=jobsForMonth(s,idx);
+  const target=monthTarget(s);
+  const gap=target-me, ePct=target>0?(me/target*100).toFixed(0):0;
+  const isCurrent=isCurrentYear();
 
   const jobsHtml=jobs.length===0?'<div class="empty-state">No jobs this month.</div>':jobs.map(j=>{
-    const oi=state.jobs.indexOf(j);
-    const payStr=j.type==='confirmed'?fmtFull(j.pay):
-      (j.payMode==='exact'&&j.exactPay?fmtFull(j.exactPay):
-      (j.rangeLow&&j.rangeHigh?fmt(j.rangeLow)+'–'+fmt(j.rangeHigh):'TBD'));
-    const chipCls=j.type==='confirmed'?'confirmed-chip':'pending-chip';
-    return `<div class="month-job-chip ${chipCls}">
+    const oi=(s.jobs||[]).indexOf(j);
+    const payStr=j.type==='confirmed'?fmtFull(j.pay):(j.payMode==='exact'&&j.exactPay?fmtFull(j.exactPay):(j.rangeLow&&j.rangeHigh?fmt(j.rangeLow)+'–'+fmt(j.rangeHigh):'TBD'));
+    return `<div class="month-job-chip ${j.type}-chip">
       <div class="chip-left">
         <div class="chip-name">${j.name}</div>
         <div class="chip-sub">${jobRange(j)} · ${j.type}</div>
         ${j.desc?`<div class="chip-sub" style="font-style:italic">${j.desc}</div>`:''}
       </div>
       <div class="chip-pay">${payStr}</div>
-      ${j.type==='pending'?`<button class="chip-complete-btn" onclick="closeModal('monthModalOverlay');openCompleteModal(${oi})">✓ Done</button>`:''}
-      <button class="chip-edit-btn" onclick="closeModal('monthModalOverlay');openEditModal(${oi})">Edit</button>
+      ${isCurrent&&j.type==='pending'?`<button class="chip-complete-btn" onclick="closeModal('monthModalOverlay');openCompleteModal(${oi})">✓</button>`:''}
+      ${isCurrent?`<button class="chip-edit-btn" onclick="closeModal('monthModalOverlay');openEditModal(${oi})">Edit</button>`:''}
     </div>`;
   }).join('');
 
@@ -776,7 +884,7 @@ window.openMonthModal = function(idx){
       <div class="month-detail-title">${MONTH_FULL[idx]}</div>
       <div class="month-detail-earned">${me>0?fmtFull(me):'—'}</div>
     </div>
-    <div class="month-detail-stat"><span class="lbl">Target</span><span class="val">${fmtFull(m.target)}</span></div>
+    <div class="month-detail-stat"><span class="lbl">Target</span><span class="val">${fmtFull(target)}</span></div>
     <div class="month-detail-stat"><span class="lbl">Earned</span><span class="val" style="color:var(--green)">${fmtFull(me)}</span></div>
     <div class="month-detail-stat"><span class="lbl">Pending Pipeline</span><span class="val" style="color:var(--yellow-dark)">${proj>0?fmtFull(proj):'—'}</span></div>
     <div class="month-detail-stat"><span class="lbl">Gap to Target</span><span class="val" style="color:${gap>0?'var(--red)':'var(--green)'}">${gap>0?fmtFull(gap)+' short':'Target met ✓'}</span></div>
@@ -789,33 +897,35 @@ window.openMonthModal = function(idx){
   document.getElementById('monthModalOverlay').classList.add('open');
 };
 
-// ── MARK COMPLETE MODAL ───────────────────────────────────────────────────────
+// ── COMPLETE ──────────────────────────────────────────────────────────────
 window.openCompleteModal = function(idx){
   completeTargetIdx=idx;
-  const j=state.jobs[idx];
+  const s=getState(); if(!s) return;
+  const j=s.jobs[idx];
   document.getElementById('completeJobName').textContent=j.name;
-  const guess=jobMid(j)||'';
-  document.getElementById('completePayInput').value=guess||'';
+  document.getElementById('completePayInput').value=jobMid(j)||'';
   document.getElementById('completeModalOverlay').classList.add('open');
 };
 
 window.confirmComplete = function(){
   const pay=parseFloat(document.getElementById('completePayInput').value);
   if(isNaN(pay)||pay<0){alert('Please enter a valid amount.');return;}
-  state.jobs[completeTargetIdx]={...state.jobs[completeTargetIdx],type:'confirmed',pay,exactPay:null,rangeLow:null,rangeHigh:null};
+  const s=getState(); if(!s) return;
+  s.jobs[completeTargetIdx]={...s.jobs[completeTargetIdx],type:'confirmed',pay,exactPay:null,rangeLow:null,rangeHigh:null};
+  setState(s);
   closeModal('completeModalOverlay');
   persistAndRender();
 };
 
-// ── REVERT JOB ────────────────────────────────────────────────────────────────
 window.revertJob = function(idx){
-  if(!confirm('Revert this job to pending? This will remove it from total earned.')) return;
-  const j=state.jobs[idx];
-  state.jobs[idx]={...j,type:'pending',pay:null,payMode:'exact',exactPay:null};
+  if(!confirm('Revert to pending? This removes it from total earned.')) return;
+  const s=getState(); if(!s) return;
+  s.jobs[idx]={...s.jobs[idx],type:'pending',pay:null,payMode:'exact',exactPay:null};
+  setState(s);
   persistAndRender();
 };
 
-// ── ADD / EDIT JOB ────────────────────────────────────────────────────────────
+// ── ADD / EDIT JOB ────────────────────────────────────────────────────────
 window.setType = function(type,btn){
   jobType=type;
   document.querySelectorAll('.type-btn').forEach(b=>b.classList.remove('active'));
@@ -823,8 +933,8 @@ window.setType = function(type,btn){
   document.getElementById('jConfirmedPay').style.display=type==='confirmed'?'':'none';
   document.getElementById('jPendingPay').style.display=type==='pending'?'':'none';
   document.getElementById('typeHint').textContent=type==='confirmed'
-    ?'This job is done and payment received. It will count toward your total earned.'
-    :'Booked but not yet paid. Shows in pipeline until you mark it complete.';
+    ?'Done and paid — counts toward total earned.'
+    :'Booked but not yet paid — shows in pipeline.';
 };
 
 window.setPayMode = function(mode){
@@ -836,6 +946,7 @@ window.setPayMode = function(mode){
 };
 
 window.openAddModal = function(){
+  if(!isCurrentYear()) return;
   editingIdx=null;
   document.getElementById('jobModalTitle').textContent='Add a Job';
   ['jName','jStart','jEnd','jPay','jExact','jRangeLow','jRangeHigh','jDesc'].forEach(id=>{
@@ -846,20 +957,21 @@ window.openAddModal = function(){
   document.querySelector('.type-btn.confirmed').classList.add('active');
   document.getElementById('jConfirmedPay').style.display='';
   document.getElementById('jPendingPay').style.display='none';
-  document.getElementById('typeHint').textContent='This job is done and payment received. It will count toward your total earned.';
+  document.getElementById('typeHint').textContent='Done and paid — counts toward total earned.';
   setPayMode('exact');
   document.getElementById('jobModalOverlay').classList.add('open');
 };
 
 window.openEditModal = function(idx){
   editingIdx=idx;
-  const j=state.jobs[idx];
+  const s=getState(); if(!s) return;
+  const j=s.jobs[idx];
   document.getElementById('jobModalTitle').textContent='Edit Job';
   document.getElementById('jName').value=j.name;
   document.getElementById('jDesc').value=j.desc||'';
-  document.getElementById('jStart').value='2026-'+String(j.month+1).padStart(2,'0')+'-'+String(j.startDay).padStart(2,'0');
+  document.getElementById('jStart').value=viewingYear+'-'+String(j.month+1).padStart(2,'0')+'-'+String(j.startDay).padStart(2,'0');
   document.getElementById('jEnd').value=(j.endMonth!==undefined&&j.endDay!==undefined)
-    ?'2026-'+String(j.endMonth+1).padStart(2,'0')+'-'+String(j.endDay).padStart(2,'0'):'';
+    ?viewingYear+'-'+String(j.endMonth+1).padStart(2,'0')+'-'+String(j.endDay).padStart(2,'0'):'';
   jobType=j.type;
   document.querySelectorAll('.type-btn').forEach(b=>b.classList.remove('active'));
   document.querySelector(`.type-btn.${j.type}`).classList.add('active');
@@ -876,9 +988,7 @@ window.openEditModal = function(idx){
     document.getElementById('jRangeLow').value=j.rangeLow||'';
     document.getElementById('jRangeHigh').value=j.rangeHigh||'';
   }
-  document.getElementById('typeHint').textContent=j.type==='confirmed'
-    ?'This job is done and payment received.'
-    :'Booked but not yet paid. Shows in pipeline until you mark it complete.';
+  document.getElementById('typeHint').textContent=j.type==='confirmed'?'Done and paid.':'Booked but not yet paid.';
   document.getElementById('jobModalOverlay').classList.add('open');
 };
 
@@ -899,47 +1009,56 @@ window.saveJob = function(){
     rangeHigh:jobType==='pending'&&payMode==='range'?(parseFloat(document.getElementById('jRangeHigh').value)||null):null,
   };
   if(endVal){const e=new Date(endVal+'T00:00:00');job.endMonth=e.getMonth();job.endDay=e.getDate();}
-  if(editingIdx!==null) state.jobs[editingIdx]=job;
-  else state.jobs.push(job);
+  const s=getState(); if(!s) return;
+  if(!s.jobs) s.jobs=[];
+  if(editingIdx!==null) s.jobs[editingIdx]=job;
+  else s.jobs.push(job);
+  setState(s);
   closeModal('jobModalOverlay');
   persistAndRender();
 };
 
 window.deleteJob = function(idx){
-  if(confirm('Remove this job?')){state.jobs.splice(idx,1);persistAndRender();}
+  if(!confirm('Remove this job?')) return;
+  const s=getState(); if(!s) return;
+  s.jobs.splice(idx,1);
+  setState(s);
+  persistAndRender();
 };
 
-// ── CALENDAR ──────────────────────────────────────────────────────────────────
+// ── CALENDAR ──────────────────────────────────────────────────────────────
 window.toggleCal = function(){
   calOpen=!calOpen;
   document.getElementById('calBody').className='cal-body'+(calOpen?' open':'');
   document.getElementById('calToggle').className='cal-toggle-row fade-in'+(calOpen?' open':'');
   document.getElementById('calChevron').className='cal-chevron'+(calOpen?' open':'');
-  if(calOpen) renderCalendar();
+  const s=getState();
+  if(calOpen&&s) renderCalendar(s,isCurrentYear(),REAL_TODAY.getMonth());
 };
 
-function updateCalToggleSub(){
-  const total=state.jobs.length;
-  const months=[...new Set(state.jobs.map(j=>j.month))].length;
+function updateCalToggleSub(s){
+  const jobs=s.jobs||[];
+  const total=jobs.length;
+  const months=[...new Set(jobs.map(j=>j.month))].length;
   document.getElementById('calToggleSub').textContent=total>0
     ?`${total} job${total!==1?'s':''} across ${months} month${months!==1?'s':''}. Tap to ${calOpen?'hide':'view'}.`
     :'Tap to view booked days';
 }
 
-window.calPrev = function(){ calMonth=Math.max(0,calMonth-1); renderCalendar(); };
-window.calNext = function(){ calMonth=Math.min(11,calMonth+1); renderCalendar(); };
+window.calPrev = function(){ calMonth=Math.max(0,calMonth-1); const s=getState(); if(s) renderCalendar(s,isCurrentYear(),REAL_TODAY.getMonth()); };
+window.calNext = function(){ calMonth=Math.min(11,calMonth+1); const s=getState(); if(s) renderCalendar(s,isCurrentYear(),REAL_TODAY.getMonth()); };
 
-function renderCalendar(){
-  document.getElementById('calNavMonth').textContent=MONTH_FULL[calMonth]+' 2026';
+function renderCalendar(s, isCurrent, curM){
+  document.getElementById('calNavMonth').textContent=MONTH_FULL[calMonth]+' '+viewingYear;
   const grid=document.getElementById('calGrid');
   grid.innerHTML='';
   DOW.forEach(d=>{grid.innerHTML+=`<div class="cal-dow">${d}</div>`;});
 
   const dayMap={};
-  state.jobs.forEach(j=>{
-    const s=new Date(2026,j.month,j.startDay);
-    const e=(j.endMonth!==undefined&&j.endDay!==undefined)?new Date(2026,j.endMonth,j.endDay):new Date(s);
-    for(let d=new Date(s);d<=e;d.setDate(d.getDate()+1)){
+  (s.jobs||[]).forEach(j=>{
+    const start=new Date(viewingYear,j.month,j.startDay);
+    const end=(j.endMonth!==undefined&&j.endDay!==undefined)?new Date(viewingYear,j.endMonth,j.endDay):new Date(start);
+    for(let d=new Date(start);d<=end;d.setDate(d.getDate()+1)){
       if(d.getMonth()!==calMonth) continue;
       const key=d.getDate();
       if(!dayMap[key]) dayMap[key]=[];
@@ -947,13 +1066,13 @@ function renderCalendar(){
     }
   });
 
-  const firstDow=new Date(2026,calMonth,1).getDay();
-  const daysInMo=new Date(2026,calMonth+1,0).getDate();
+  const firstDow=new Date(viewingYear,calMonth,1).getDay();
+  const daysInMo=new Date(viewingYear,calMonth+1,0).getDate();
   for(let b=0;b<firstDow;b++) grid.innerHTML+='<div class="cal-day empty"></div>';
 
   for(let day=1;day<=daysInMo;day++){
     const jobs=dayMap[day]||[];
-    const isToday=calMonth===CUR_M&&day===TODAY.getDate();
+    const isToday=isCurrent&&calMonth===REAL_TODAY.getMonth()&&day===REAL_TODAY.getDate();
     const startJobs=jobs.filter(j=>j.month===calMonth&&j.startDay===day);
     let cls='cal-day';
     let oc='';
@@ -968,18 +1087,17 @@ function renderCalendar(){
 }
 
 window.openDayPopup = function(mi,day){
-  const jobs=state.jobs.filter(j=>{
-    const s=new Date(2026,j.month,j.startDay);
-    const e=(j.endMonth!==undefined&&j.endDay!==undefined)?new Date(2026,j.endMonth,j.endDay):new Date(s);
-    const d=new Date(2026,mi,day);
-    return d>=s&&d<=e;
+  const s=getState(); if(!s) return;
+  const jobs=(s.jobs||[]).filter(j=>{
+    const start=new Date(viewingYear,j.month,j.startDay);
+    const end=(j.endMonth!==undefined&&j.endDay!==undefined)?new Date(viewingYear,j.endMonth,j.endDay):new Date(start);
+    const d=new Date(viewingYear,mi,day);
+    return d>=start&&d<=end;
   });
   if(!jobs.length) return;
-  document.getElementById('dayPopupDate').textContent=MONTH_FULL[mi]+' '+day+', 2026';
+  document.getElementById('dayPopupDate').textContent=MONTH_FULL[mi]+' '+day+', '+viewingYear;
   document.getElementById('dayPopupJobs').innerHTML=jobs.map(j=>{
-    const payStr=j.type==='confirmed'?fmtFull(j.pay):
-      (j.payMode==='exact'&&j.exactPay?fmtFull(j.exactPay):
-      (j.rangeLow&&j.rangeHigh?fmt(j.rangeLow)+'–'+fmt(j.rangeHigh):'TBD'));
+    const payStr=j.type==='confirmed'?fmtFull(j.pay):(j.payMode==='exact'&&j.exactPay?fmtFull(j.exactPay):(j.rangeLow&&j.rangeHigh?fmt(j.rangeLow)+'–'+fmt(j.rangeHigh):'TBD'));
     return `<div class="day-popup-job ${j.type}">
       <div class="day-popup-job-name">${j.name}</div>
       <div class="day-popup-job-meta">${jobRange(j)} · ${j.type}</div>
@@ -990,14 +1108,13 @@ window.openDayPopup = function(mi,day){
   document.getElementById('dayPopup').classList.add('open');
 };
 
-// ── MODALS ────────────────────────────────────────────────────────────────────
+// ── MODALS ────────────────────────────────────────────────────────────────
 window.closeModal = function(id){ document.getElementById(id).classList.remove('open'); };
 window.closeOnOverlay = function(e,id){ if(e.target===document.getElementById(id)) closeModal(id); };
 
-// ── INIT ──────────────────────────────────────────────────────────────────────
-document.getElementById('dateBadge').textContent=TODAY.toLocaleDateString('en-US',{month:'short',day:'numeric',year:'numeric'});
+// ── INIT ──────────────────────────────────────────────────────────────────
+document.getElementById('dateBadge').textContent = REAL_TODAY.toLocaleDateString('en-US',{month:'short',day:'numeric',year:'numeric'});
 initFirebase();
-
 </script>
 </body>
 </html>
